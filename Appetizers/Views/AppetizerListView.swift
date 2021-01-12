@@ -8,14 +8,44 @@
 import SwiftUI
 
 struct AppetizerListView: View {
+    
+    @StateObject var viewModel = AppetizerListViewModel()
+//    @State private var isShowingDetails = false
+//    @State private var selectedAppetizer: Appetizer?
+ 
     var body: some View {
-        NavigationView {
-            List(MockDate.apptizers) { appetizer in
-                AppetizerListCell(appetizer: appetizer)
+        ZStack {
+            NavigationView {
+                List(viewModel.appetizers) { appetizer in
+                    AppetizerListCell(appetizer: appetizer)
+                        .onTapGesture {
+                            viewModel.selectedAppetizer = appetizer
+                            viewModel.isShowingDetails = true
+                        }
+                }
+                .navigationTitle("🍟 Appetizers")
+                .disabled(viewModel.isShowingDetails)
+                
             }
-            .navigationTitle("🍟 Appetizers")
+            .onAppear {
+                viewModel.getAppetizer()
+            }
+            .blur(radius: viewModel.isShowingDetails ? 20 : 0)
+            
+            if viewModel.isShowingDetails {
+                AppetizerDetailView(appetizer: viewModel.selectedAppetizer!, isShowingDetails: $viewModel.isShowingDetails)
+            }
+            
+            if viewModel.isLoading {
+                LoadingView()
+            }
+            
+            
         }
        
+        .alert(item: $viewModel.alertItem) { (alert) in
+            Alert(title: alert.title, message: alert.messge, dismissButton: alert.dismissButon)
+        }
     }
 }
 
@@ -31,8 +61,7 @@ struct AppetizerListCell: View {
     
     var body: some View {
         HStack {
-            Image("asian-flank-steak")
-                .resizable()
+            AppetizerRemoteImage(urlStirng: appetizer.imageURL)
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 120, height: 90
                 )
